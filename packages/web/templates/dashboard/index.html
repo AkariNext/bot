@@ -1,0 +1,34 @@
+{% extends "dashboard/_layout.html" %} {% block children %}
+
+<div class="grid grid-cols-3 gap-4">
+  {% for guild in guilds %}
+  <div class="card w-96 bg-base-100 shadow-xl">
+    <div class="card-body">
+      <div class="flex gap-4">
+        <div class="avatar">
+          <div class="w-16 rounded">
+            {% if guild.icon %}
+            <img
+              src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png?size=128"
+            />
+            {% else %}
+            <div class="avatar placeholder">
+              <div class="bg-neutral text-neutral-content rounded-full w-16">
+                <span class="text-xl">{{ guild.name }}</span>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <h2 class="card-title">{{ guild.name }}</h2>
+      </div>
+      <div class="card-actions justify-end">
+        <a class="btn btn-primary">Configure</a>
+      </div>
+    </div>
+  </div>
+
+  {% endfor %}
+</div>
+
+{% endblock %}

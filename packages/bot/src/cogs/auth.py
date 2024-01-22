@@ -13,7 +13,7 @@ from discord.ext import commands, tasks
 from discord import Embed, Interaction, app_commands
 from packages.bot.src.utils.common import get_guild, get_member
 
-from packages.shared.infrastructure.database import session
+from packages.shared.infrastructure.database import scoped_session
 from packages.shared.models import AuthRequest, CaptchaSettings, Guild
 
 
@@ -28,22 +28,22 @@ class InputAnswerModal(discord.ui.Modal, title="Captcha"):
     )
 
     async def on_submit(self, inter: discord.Interaction):
-        auth_request = (
-            session.query(AuthRequest)
-            .filter(AuthRequest.user_id == inter.user.id)
-            .first()
-        )
-        if auth_request is None:
-            await inter.response.send_message(
-                "認証が見つかりませんでした", ephemeral=True
+        with scoped_session() as session:
+            auth_request = (
+                session.query(AuthRequest)
+                .filter(AuthRequest.user_id == inter.user.id)
+                .first()
             )
-            return
-        if auth_request.correct_answer != self.name.value:
-            await inter.response.send_message("答えが違います", ephemeral=True)
-            return
-        session.delete(auth_request)
+            if auth_request is None:
+                await inter.response.send_message(
+                    "認証が見つかりませんでした", ephemeral=True
+                )
+                return
+            if auth_request.correct_answer != self.name.value:
+                await inter.response.send_message("答えが違います", ephemeral=True)
+                return
+            session.delete(auth_request)
 
-        session.commit()
         await inter.response.send_message("認証が完了しました", ephemeral=True)
 
     async def on_error(
@@ -96,17 +96,17 @@ class AuthCog(commands.Cog):
 
         match custom_id:
             case "start_verify":
-                _id = str(uuid.uuid4())
-                correct_answer = str(random.randint(1000, 9999))
-                session.add(
-                    AuthRequest(
-                        id=_id,
-                        user_id=inter.user.id,
-                        guild_id=inter.guild_id,
-                        correct_answer=correct_answer,
+                with scoped_session() as session:
+                    _id = str(uuid.uuid4())
+                    correct_answer = str(random.randint(1000, 9999))
+                    session.add(
+                        AuthRequest(
+                            id=_id,
+                            user_id=inter.user.id,
+                            guild_id=inter.guild_id,
+                            correct_answer=correct_answer,
+                        )
                     )
-                )
-                session.commit()
                 embed = Embed(title="画像に表示されている数字を入力してください")
                 image = ImageCaptcha().generate(correct_answer)
                 file = discord.File(image, filename="captcha.png")
@@ -129,11 +129,12 @@ class AuthCog(commands.Cog):
 
     @tasks.loop(seconds=5)
     async def check_auth_not_completed(self):
-        results = (
-            session.query(Guild, CaptchaSettings)
-            .join(CaptchaSettings, Guild.guild_id == CaptchaSettings.guild_id)
-            .all()
-        )
+        with scoped_session() as session:
+            results = (
+                session.query(Guild, CaptchaSettings)
+                .join(CaptchaSettings, Guild.guild_id == CaptchaSettings.guild_id)
+                .all()
+            )
 
         for result in results:
             guilds, captcha_settings = result.tuple()
@@ -153,7 +154,6 @@ class AuthCog(commands.Cog):
                             await member.ban()
 
                     session.delete(auth_request)
-                    session.commit()
 
 
 async def setup(bot: commands.Bot):

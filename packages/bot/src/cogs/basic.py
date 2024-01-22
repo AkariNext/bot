@@ -2,7 +2,7 @@ import uuid
 from discord import Interaction, app_commands
 from discord.ext import commands
 
-from packages.shared.infrastructure.database import session
+from packages.shared.infrastructure.database import scoped_session
 from packages.shared.models import CaptchaSettings, Guild
 
 class BasicCog(commands.Cog):
@@ -20,12 +20,15 @@ class BasicCog(commands.Cog):
             guild=guild,
         )
         
-        session.add(guild)
-        session.add(captcha_settings)
+        with scoped_session() as session:
+            session.add(guild)
+            session.add(captcha_settings)
 
-        session.commit()
         await inter.response.send_message("設定しました")
-        
+    
+    @app_commands.command()
+    async def signup(self, inter: Interaction):
+        await inter.response.send_message("認証が完了しました", ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(BasicCog(bot))

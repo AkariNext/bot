@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     guild_id: int = Field(default=None)
     turnstile_secret: str = Field(default=None)
     domain: str = Field(default=None)
+    discord_client_id: str = Field(default=None)
+    discord_client_secret: str = Field(default=None)
+    discord_redirect_url: str = Field(default=None)
+    secret_key: str = Field(default=None)
 
 
 settings = Settings()
