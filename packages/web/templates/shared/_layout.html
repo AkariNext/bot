@@ -2,20 +2,29 @@
 <html lang="ja" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <meta name="viewport" content="width=360,initial-scale=1" />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
     {% block additional_css %}{% endblock %}
   </head>
   <body>
     <div class="navbar bg-base-100">
       <div class="flex-1">
+        <label for="my-drawer-2" class="btn btn-primary drawer-button lg:hidden"
+          >■</label
+        >
         <a class="btn btn-ghost text-xl">NextHime</a>
       </div>
       <div class="navbar-end">
-        {%if user  %}
+        {%if user %}
         <a class="btn" href="/login">Dashboard</a>
 
         {% else %}
-        
+
         <a class="btn" href="/login">Login</a>
         {% endif %}
       </div>
