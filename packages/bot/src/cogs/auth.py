@@ -11,7 +11,7 @@ import discord
 from captcha.image import ImageCaptcha
 from discord.ext import commands, tasks
 from discord import Embed, Interaction, app_commands
-from packages.bot.src.utils.common import get_guild, get_member
+from packages.shared.utils.common import get_guild, get_member
 
 from packages.shared.infrastructure.database import scoped_session
 from packages.shared.models import AuthRequest, CaptchaSettings, Guild
@@ -136,24 +136,24 @@ class AuthCog(commands.Cog):
                 .all()
             )
 
-        for result in results:
-            guilds, captcha_settings = result.tuple()
-            for auth_request in guilds.auth_requests:
-                time_limit = auth_request.created_at + datetime.timedelta(
-                    seconds=captcha_settings.time_limit
-                )
+            for result in results:
+                guilds, captcha_settings = result.tuple()
+                for auth_request in guilds.auth_requests:
+                    time_limit = auth_request.created_at + datetime.timedelta(
+                        seconds=captcha_settings.time_limit
+                    )
 
-                if auth_request.created_at > time_limit:
-                    guild = await get_guild(self.bot, guilds.guild_id)
-                    member = await get_member(guild, auth_request.user_id)
+                    if auth_request.created_at > time_limit:
+                        guild = await get_guild(self.bot, guilds.guild_id)
+                        member = await get_member(guild, auth_request.user_id)
 
-                    match captcha_settings.time_limit_action:
-                        case "kick":
-                            await member.kick()
-                        case "ban":
-                            await member.ban()
+                        match captcha_settings.time_limit_action:
+                            case "kick":
+                                await member.kick()
+                            case "ban":
+                                await member.ban()
 
-                    session.delete(auth_request)
+                        session.delete(auth_request)
 
 
 async def setup(bot: commands.Bot):
