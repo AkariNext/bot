@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Awaitable, Callable
 
 
 class ICacheStrategy[T](ABC):
@@ -9,6 +10,11 @@ class ICacheStrategy[T](ABC):
     @abstractmethod
     async def get(self, key: str) -> T:
         """キーに対応する値を取得する"""
+        ...
+
+    @abstractmethod
+    async def get_or_set(self, key: str, callback: Callable[..., Awaitable[T]], *, ttl: float | None = None) -> T:
+        """キーに対応する値を取得する。キーがなければcallbackで取得した値をセットする"""
         ...
 
     @abstractmethod
