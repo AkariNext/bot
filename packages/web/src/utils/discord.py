@@ -3,8 +3,21 @@ import discord
 from fastapi import Depends
 from pydantic import BaseModel
 
+from packages.shared.config import settings
 from packages.shared.models import DiscordToken
 from packages.web.src.auth import get_current_token
+
+def _bot_client():
+    client: discord.Client | None = None
+    async def _():
+        nonlocal client
+        if client is None:
+            client = discord.Client(intents=discord.Intents.all())
+            await client.login(settings.bot_token)
+        return client
+    return _
+
+get_bot_client = _bot_client()
 
 
 async def http_client():
