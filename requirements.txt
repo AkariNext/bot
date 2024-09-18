@@ -1,19 +1,2 @@
-# shared
-discord-py == 2.3.2  # for discord bot and web
-pydantic == 2.5.2
-pydantic-settings == 2.1.0
-rich == 13.7.0
-
-# database
-sqlalchemy == 2.0.23
-alembic == 1.13.0
-
-# web
-fastapi==0.109.0
-uvicorn == 0.24.0.post1
-jinja2 == 3.1.2
-git+https://github.com/Tert0/fastapi-discord.git == 2f45831760f8e657b602485dbd1f5076a894fe32
-python-jose[cryptography]  # for JWT token
-
-# bot
-captcha == 0.5.0
+discord.py
+discord.py[voice]
