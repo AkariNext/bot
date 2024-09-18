@@ -10,8 +10,7 @@ class LinkCog(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def link_check(self, message: discord.Message):
-        print('Message received:', message.content)
-        pattern = re.compile(r'https://discord.com/channels/(\d+)/(\d+)/(\d+)')
+        pattern = re.compile(r'https://discord(?:app)?\.com/channels/(\d+)/(\d+)/(\d+)')
         if found := pattern.search(message.content):
             print('Guild ID:', found.group(1))
             print('Channel ID:', found.group(2))
@@ -24,11 +23,14 @@ class LinkCog(commands.Cog):
                 found_message = await found_channel.fetch_message(message_id)
                 
                 embed = Embed(
-                    title='Message link',
                     description=found_message.content,
-                    color=found_message.author.color
+                    color=discord.Color.dark_green()
                 )
-                
+
+                if len(found_message.attachments) > 0:
+                    if found_message.attachments[0].content_type in ['image/png', 'image/jpeg', 'image/gif', 'video/mp4']:
+                        embed.set_image(url=found_message.attachments[0].url)
+
                 embed.set_footer(text=f'In {found_channel.name} - {found_message.created_at.strftime('%Y/%m/%d - %H:%M:%S')}', icon_url=found_channel.guild.icon)
                 
                 embed.set_author(
