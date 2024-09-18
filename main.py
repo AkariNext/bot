@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 
-from infrastructures import db
+# from src.infrastructures import db
 
 INTENTS = discord.Intents.all()
 COGS = [
@@ -19,7 +19,7 @@ class Bot(commands.Bot):
         )
 
     async def setup_hook(self) -> None:
-        await db.init()
+        # await db.init()
         for cog in COGS:
             await self.load_extension(cog)
 
