@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from discord import Embed, app_commands
-# from prisma.models import Guild
 
 
 class AuthCog(commands.Cog):
@@ -16,7 +15,6 @@ class AuthCog(commands.Cog):
             color=discord.Color.blurple(),
         )
 
-        # Guild.prisma()
 
         view = discord.ui.View(timeout=None)
 
