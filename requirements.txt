@@ -2,8 +2,9 @@ discord.py
 discord.py[voice]
 sqlalchemy[asyncio]
 alembic
-sqlmodel
 aiosqlite
 captcha
 tzdata
 python-dotenv
+sqlmodel
+
