@@ -1,13 +1,17 @@
+
 import os
 import discord
 from discord.ext import commands
 
+from src.boot import ENV
+
+
 # from src.infrastructures import db
+
 
 INTENTS = discord.Intents.all()
 COGS = [
     'src.cogs.link',
-    'src.cogs.auth',
 ]
 
 
@@ -36,11 +40,11 @@ class Bot(commands.Bot):
         await self.process_commands(message)
 
 
-TOKEN = os.getenv('TOKEN')
+# TOKEN = os.getenv('TOKEN')
 
-if TOKEN is None:
-    raise ValueError('Token is not set')
+# if TOKEN is None:
+#     raise ValueError('Token is not set')
 
 if __name__ == '__main__':
     bot = Bot()
-    bot.run(TOKEN)
+    bot.run(ENV.get('BOT_TOKEN'))

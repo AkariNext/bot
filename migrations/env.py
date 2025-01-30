@@ -1,13 +1,29 @@
+# ruff: noqa: F401
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
+from sqlmodel import SQLModel
+
+from src.infrastructures.database import DatabaseConnection
+from src.dependency import di_injector
+
+# モデル一覧
+# ここに追加しないとSQLModelが認識しない
+# from src.models.auth import AuthRequest
+# from src.models.guild import Guild
+# from src.models.user import User
+
+db_conenction = di_injector.get_class(DatabaseConnection)
+DB_URL = db_conenction.get_migration_url()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+config.set_main_option('sqlalchemy.url', DB_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -18,7 +34,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

@@ -2,4 +2,8 @@ discord.py
 discord.py[voice]
 sqlalchemy[asyncio]
 alembic
-injector
+sqlmodel
+aiosqlite
+captcha
+tzdata
+python-dotenv

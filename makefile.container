@@ -1,0 +1,21 @@
+.PHONY: help print
+.DEFAULT_GOAL := help
+
+print: ## 分岐テスト用
+	echo "コンテナ"
+
+migration: ## Run alembic migration
+	alembic upgrade head
+
+migration-rollback: ## Run alembic migration
+	alembic downgrade -1
+
+migration-refresh: ## Run alembic migration
+	alembic downgrade base
+	alembic upgrade head
+
+create-migration: ## Create alembic migration
+ifndef name
+	$(error name is not set)
+endif
+	alembic revision --autogenerate -m "$(name)"
