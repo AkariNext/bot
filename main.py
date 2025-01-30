@@ -1,17 +1,14 @@
 
-import os
 import discord
 from discord.ext import commands
 
 from src.boot import ENV
 
 
-# from src.infrastructures import db
-
-
 INTENTS = discord.Intents.all()
 COGS = [
     'src.cogs.link',
+    'src.cogs.role',
 ]
 
 
