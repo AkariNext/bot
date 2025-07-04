@@ -8,3 +8,4 @@ tzdata
 python-dotenv
 sqlmodel
 
+aivoice-python

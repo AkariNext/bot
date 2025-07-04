@@ -9,6 +9,7 @@ INTENTS = discord.Intents.all()
 COGS = [
     'src.cogs.link',
     'src.cogs.role',
+    'src.cogs.tts',
 ]
 
 
@@ -31,16 +32,12 @@ class Bot(commands.Bot):
 
     async def on_ready(self):
         print('Bot is ready')
+        print(f'Logged in as: {self.user.name} ({self.user.id})')
 
     async def on_message(self, message):
         print('Message received:', message.content)
         await self.process_commands(message)
 
-
-# TOKEN = os.getenv('TOKEN')
-
-# if TOKEN is None:
-#     raise ValueError('Token is not set')
 
 if __name__ == '__main__':
     bot = Bot()
