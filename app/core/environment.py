@@ -13,3 +13,5 @@ class Env:
 
     def get(self, key: str) -> str:
         return os.environ[key]
+
+ENV = Env()

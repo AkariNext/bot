@@ -1,11 +1,12 @@
 discord.py
 discord.py[voice]
-sqlalchemy[asyncio]
-alembic
-aiosqlite
 captcha
 tzdata
 python-dotenv
-sqlmodel
+tortoise-orm[asyncpg]
+aerich
 
 aivoice-python
+robyn
+requests
+jinja2

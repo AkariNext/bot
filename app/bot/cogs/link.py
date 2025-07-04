@@ -1,6 +1,6 @@
 import re
 
-from discord import ComponentType, Embed, TextChannel, Button
+from discord import Embed, TextChannel
 import discord
 from discord.ext import commands
 

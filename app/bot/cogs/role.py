@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord import Interaction as Inter, Member, User, app_commands
+from discord import Interaction as Inter, Member, app_commands
 
 ROLES = [
     ["Silver", 536065526112452609],

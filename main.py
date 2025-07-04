@@ -2,14 +2,14 @@
 import discord
 from discord.ext import commands
 
-from src.boot import ENV
+from app.core.environment import ENV
 
 
 INTENTS = discord.Intents.all()
 COGS = [
-    'src.cogs.link',
-    'src.cogs.role',
-    'src.cogs.tts',
+    'app.bot.cogs.link',
+    'app.bot.cogs.role',
+    'app.bot.cogs.tts',
 ]
 
 

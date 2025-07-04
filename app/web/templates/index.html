@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTS Voice Settings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .voice-card {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .voice-card:hover {
+            transform: translateY(-5px);
+        }
+        .voice-card.active {
+            border: 3px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .slider-container {
+            margin: 20px 0;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        .save-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 30px;
+            padding: 12px 30px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .save-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.1);">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-microphone-alt me-2"></i>
+                TTS Voice Settings
+            </a>
+            <div class="navbar-nav ms-auto">
+                {% if user %}
+                <div class="nav-item d-flex align-items-center text-white">
+                    <img src="{{ user.avatar_url }}" alt="Avatar" class="user-avatar me-2">
+                    <span>{{ user.username }}</span>
+                    <a href="/logout" class="btn btn-outline-light btn-sm ms-3">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+                {% else %}
+                <a href="/login" class="btn btn-outline-light">
+                    <i class="fab fa-discord me-2"></i>Login with Discord
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        {% if user %}
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user-circle me-2"></i>Voice Character</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="voice-selection">
+                            <!-- Voice cards will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sliders-h me-2"></i>Voice Parameters</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="slider-container">
+                            <label for="pitch" class="form-label">
+                                <i class="fas fa-arrow-up me-2"></i>Pitch: 
+                                <span id="pitch-value">1.0</span>
+                            </label>
+                            <input type="range" class="slider" id="pitch" min="0.5" max="2.0" step="0.1" value="1.0">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="speed" class="form-label">
+                                <i class="fas fa-tachometer-alt me-2"></i>Speed: 
+                                <span id="speed-value">1.0</span>
+                            </label>
+                            <input type="range" class="slider" id="speed" min="0.5" max="4.0" step="0.1" value="1.0">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="volume" class="form-label">
+                                <i class="fas fa-volume-up me-2"></i>Volume: 
+                                <span id="volume-value">1.0</span>
+                            </label>
+                            <input type="range" class="slider" id="volume" min="0.0" max="2.0" step="0.1" value="1.0">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="pitchRange" class="form-label">
+                                <i class="fas fa-wave-square me-2"></i>Pitch Range (抑揚): 
+                                <span id="pitchRange-value">1.0</span>
+                            </label>
+                            <input type="range" class="slider" id="pitchRange" min="0.0" max="2.0" step="0.1" value="1.0">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="middlePause" class="form-label">
+                                <i class="fas fa-pause me-2"></i>Middle Pause (短ポーズ): 
+                                <span id="middlePause-value">150</span>ms
+                            </label>
+                            <input type="range" class="slider" id="middlePause" min="50" max="500" step="10" value="150">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="longPause" class="form-label">
+                                <i class="fas fa-pause-circle me-2"></i>Long Pause (長ポーズ): 
+                                <span id="longPause-value">300</span>ms
+                            </label>
+                            <input type="range" class="slider" id="longPause" min="100" max="1000" step="10" value="300">
+                        </div>
+                        
+                        <!-- スタイル設定 -->
+                        <div class="mt-4">
+                            <h6><i class="fas fa-palette me-2"></i>Voice Styles</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="slider-container">
+                                        <label for="styleJ" class="form-label">
+                                            😊 J (Joy): <span id="styleJ-value">0.0</span>
+                                        </label>
+                                        <input type="range" class="slider" id="styleJ" min="0.0" max="1.0" step="0.1" value="0.0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="slider-container">
+                                        <label for="styleA" class="form-label">
+                                            😠 A (Angry): <span id="styleA-value">0.0</span>
+                                        </label>
+                                        <input type="range" class="slider" id="styleA" min="0.0" max="1.0" step="0.1" value="0.0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="slider-container">
+                                        <label for="styleS" class="form-label">
+                                            😢 S (Sad): <span id="styleS-value">0.0</span>
+                                        </label>
+                                        <input type="range" class="slider" id="styleS" min="0.0" max="1.0" step="0.1" value="0.0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex gap-3">
+                            <button class="btn save-btn" onclick="saveSettings()">
+                                <i class="fas fa-save me-2"></i>Save Settings
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetSettings()">
+                                <i class="fas fa-undo me-2"></i>Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fab fa-discord fa-5x text-primary mb-4"></i>
+                        <h3>Welcome to TTS Voice Settings</h3>
+                        <p class="text-muted">Login with your Discord account to customize your voice settings.</p>
+                        <a href="/login" class="btn btn-primary btn-lg">
+                            <i class="fab fa-discord me-2"></i>Login with Discord
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentVoice = null;
+        let settings = {
+            pitch: 1.0,
+            speed: 1.0,
+            volume: 1.0,
+            pitchRange: 1.0,
+            middlePause: 150,
+            longPause: 300,
+            styles: {
+                J: 0.0,
+                A: 0.0,
+                S: 0.0
+            }
+        };
+
+        // Load available voices and user settings
+        async function loadVoices() {
+            try {
+                const response = await fetch('/api/voices');
+                const data = await response.json();
+                
+                const voiceContainer = document.getElementById('voice-selection');
+                voiceContainer.innerHTML = '';
+                
+                data.voices.forEach(voice => {
+                    const voiceCard = document.createElement('div');
+                    voiceCard.className = 'col-12 mb-2';
+                    voiceCard.innerHTML = `
+                        <div class="voice-card card p-2 ${voice === data.current_voice ? 'active' : ''}" 
+                             onclick="selectVoice('${voice}')">
+                            <div class="text-center">
+                                <i class="fas fa-user-alt fa-2x mb-2"></i>
+                                <div class="fw-bold">${voice}</div>
+                            </div>
+                        </div>
+                    `;
+                    voiceContainer.appendChild(voiceCard);
+                });
+                
+                currentVoice = data.current_voice;
+                settings = { ...settings, ...data.settings };
+                updateUI();
+            } catch (error) {
+                console.error('Error loading voices:', error);
+            }
+        }
+
+        function selectVoice(voice) {
+            currentVoice = voice;
+            document.querySelectorAll('.voice-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+        function updateUI() {
+            document.getElementById('pitch').value = settings.pitch;
+            document.getElementById('speed').value = settings.speed;
+            document.getElementById('volume').value = settings.volume;
+            document.getElementById('pitchRange').value = settings.pitchRange;
+            document.getElementById('middlePause').value = settings.middlePause;
+            document.getElementById('longPause').value = settings.longPause;
+            document.getElementById('styleJ').value = settings.styles.J;
+            document.getElementById('styleA').value = settings.styles.A;
+            document.getElementById('styleS').value = settings.styles.S;
+            
+            document.getElementById('pitch-value').textContent = settings.pitch;
+            document.getElementById('speed-value').textContent = settings.speed;
+            document.getElementById('volume-value').textContent = settings.volume;
+            document.getElementById('pitchRange-value').textContent = settings.pitchRange;
+            document.getElementById('middlePause-value').textContent = settings.middlePause;
+            document.getElementById('longPause-value').textContent = settings.longPause;
+            document.getElementById('styleJ-value').textContent = settings.styles.J;
+            document.getElementById('styleA-value').textContent = settings.styles.A;
+            document.getElementById('styleS-value').textContent = settings.styles.S;
+        }
+
+        // Slider event listeners
+        document.getElementById('pitch').addEventListener('input', function() {
+            settings.pitch = parseFloat(this.value);
+            document.getElementById('pitch-value').textContent = this.value;
+        });
+
+        document.getElementById('speed').addEventListener('input', function() {
+            settings.speed = parseFloat(this.value);
+            document.getElementById('speed-value').textContent = this.value;
+        });
+
+        document.getElementById('volume').addEventListener('input', function() {
+            settings.volume = parseFloat(this.value);
+            document.getElementById('volume-value').textContent = this.value;
+        });
+
+        document.getElementById('pitchRange').addEventListener('input', function() {
+            settings.pitchRange = parseFloat(this.value);
+            document.getElementById('pitchRange-value').textContent = this.value;
+        });
+
+        document.getElementById('middlePause').addEventListener('input', function() {
+            settings.middlePause = parseInt(this.value);
+            document.getElementById('middlePause-value').textContent = this.value;
+        });
+
+        document.getElementById('longPause').addEventListener('input', function() {
+            settings.longPause = parseInt(this.value);
+            document.getElementById('longPause-value').textContent = this.value;
+        });
+
+        document.getElementById('styleJ').addEventListener('input', function() {
+            settings.styles.J = parseFloat(this.value);
+            document.getElementById('styleJ-value').textContent = this.value;
+        });
+
+        document.getElementById('styleA').addEventListener('input', function() {
+            settings.styles.A = parseFloat(this.value);
+            document.getElementById('styleA-value').textContent = this.value;
+        });
+
+        document.getElementById('styleS').addEventListener('input', function() {
+            settings.styles.S = parseFloat(this.value);
+            document.getElementById('styleS-value').textContent = this.value;
+        });
+
+        async function saveSettings() {
+            try {
+                const response = await fetch('/api/save-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        voice: currentVoice,
+                        settings: settings
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('Settings saved successfully!', 'success');
+                } else {
+                    showNotification('Error saving settings', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showNotification('Error saving settings', 'error');
+            }
+        }
+
+        function resetSettings() {
+            settings = {
+                pitch: 1.0,
+                speed: 1.0,
+                volume: 1.0,
+                pitchRange: 1.0,
+                middlePause: 150,
+                longPause: 300,
+                styles: {
+                    J: 0.0,
+                    A: 0.0,
+                    S: 0.0
+                }
+            };
+            updateUI();
+            showNotification('Settings reset to default', 'info');
+        }
+
+        function showNotification(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Load data when page loads
+        {% if user %}
+        loadVoices();
+        {% endif %}
+    </script>
+</body>
+</html>
