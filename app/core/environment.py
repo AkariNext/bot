@@ -11,7 +11,7 @@ class Env:
         """環境変数をリフレッシュする"""
         load_dotenv(self.__path)
 
-    def get(self, key: str) -> str:
-        return os.environ[key]
+    def get(self, key: str, default=None) -> str | None:
+        return os.environ.get(key, default=default)
 
 ENV = Env()

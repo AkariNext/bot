@@ -6,6 +6,8 @@ import requests
 from robyn import Robyn, Request, Response
 from robyn.templating import JinjaTemplate
 from aivoice_python import AIVoiceTTsControl
+
+from app.core.environment import ENV
 from ..database.models.voice_settings import VoiceSettings
 
 class TTSWebServer:
@@ -16,10 +18,10 @@ class TTSWebServer:
         self.template = JinjaTemplate("app/web/templates")
         
         # Discord OAuth2 settings - 環境変数から取得
-        self.client_id = os.getenv("DISCORD_CLIENT_ID")
-        self.client_secret = os.getenv("DISCORD_CLIENT_SECRET")
-        self.redirect_uri = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8080/callback")
-        
+        self.client_id = ENV.get("DISCORD_CLIENT_ID")
+        self.client_secret = ENV.get("DISCORD_CLIENT_SECRET")
+        self.redirect_uri = ENV.get("DISCORD_REDIRECT_URI", "http://localhost:8080/callback")
+
         self.setup_routes()
     
     async def get_user_voice_settings(self, user_id: str):
