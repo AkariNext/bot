@@ -1,4 +1,5 @@
 import asyncio
+import re
 import discord
 import threading
 from discord import app_commands, Interaction
@@ -126,6 +127,25 @@ class TTSCog(commands.Cog):
         """メッセージ受信時の音声合成・再生処理"""
         if message.author.bot or message.guild is None:
             return
+        
+        # メッセージの前処理（メンション・絵文字・URL置き換え）
+        processed_content = message.content
+        
+        # メンションを表示名に置き換え
+        for mention in message.mentions:
+            print(f"メンション置き換え: {mention.mention} -> {mention.display_name}")
+            processed_content = processed_content.replace(mention.mention, mention.display_name)
+        
+        # 絵文字をテキストに置き換え
+        processed_content = re.sub(r'<a?:([^:]+):(\d+)>', r'[\1]', processed_content)
+        
+        # URLは読み上げ時に「URL省略」とする
+        processed_content = re.sub(r'https?://\S+', '[URL省略]', processed_content)
+        
+        # 処理されたコンテンツをメッセージに設定
+        message.content = processed_content
+        
+        print(f"元メッセージ: {message.content} -> 処理後: {processed_content}")
 
         if message.guild.id in self.tts_controls:
             await self._process_tts_message(message)
