@@ -25,8 +25,8 @@ class Bot(commands.Bot):
         for cog in COGS:
             await self.load_extension(cog)
 
-        self.tree.copy_global_to(guild=discord.Object(id='530299114387406860'))
-        await self.tree.sync(guild=discord.Object(id='530299114387406860'))
+        self.tree.copy_global_to(guild=discord.Object(id='1072447995418787902'))
+        await self.tree.sync(guild=discord.Object(id='1072447995418787902'))
 
         return await super().setup_hook()
 

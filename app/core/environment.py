@@ -9,7 +9,7 @@ class Env:
 
     def refresh(self) -> None:
         """環境変数をリフレッシュする"""
-        load_dotenv(self.__path)
+        load_dotenv(self.__path, override=True)
 
     def get(self, key: str, default=None) -> str | None:
         return os.environ.get(key, default=default)

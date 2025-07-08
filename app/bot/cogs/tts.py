@@ -2,6 +2,8 @@ import asyncio
 import re
 import discord
 import threading
+import hashlib
+import os
 from discord import app_commands, Interaction
 from discord.ext import commands
 from typing import Dict, Any
@@ -20,6 +22,10 @@ class TTSCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
         self.tts_controls: Dict[int, Dict[str, discord.VoiceClient]] = {}  # サーバーごとのVC管理
+        self.audio_cache_dir = "data/audio/cache"  # キャッシュディレクトリ
+        
+        # キャッシュディレクトリを作成
+        os.makedirs(self.audio_cache_dir, exist_ok=True)
         
         # データベース初期化とマイグレーションを非同期で実行
         self.bot.loop.create_task(self._initialize_database())
@@ -62,6 +68,40 @@ class TTSCog(commands.Cog):
             await VoiceSettings.update_user_settings(user_id, settings)
         except Exception as e:
             print(f"ユーザー設定保存エラー: {e}")
+    
+    def _generate_cache_key(self, text: str, voice_preset: Dict[str, Any]) -> str:
+        """テキストとプリセットからキャッシュキーを生成"""
+        # プリセットを文字列化してソート（辞書の順序に依存しないように）
+        preset_str = str(sorted(voice_preset.items()))
+        
+        # テキストとプリセットを結合してハッシュ化
+        combined = f"{text}:{preset_str}"
+        cache_key = hashlib.md5(combined.encode('utf-8')).hexdigest()
+        
+        return cache_key
+    
+    def _get_cached_audio_path(self, cache_key: str) -> str:
+        """キャッシュキーから音声ファイルパスを取得"""
+        return os.path.join(self.audio_cache_dir, f"{cache_key}.wav")
+    
+    def _is_audio_cached(self, cache_key: str) -> bool:
+        """音声ファイルがキャッシュされているかチェック"""
+        cache_path = self._get_cached_audio_path(cache_key)
+        return os.path.exists(cache_path)
+    
+    def _save_to_cache(self, cache_key: str, source_file: str = "data/audio/output.wav") -> str:
+        """生成された音声ファイルをキャッシュに保存"""
+        cache_path = self._get_cached_audio_path(cache_key)
+        
+        try:
+            # 元ファイルをキャッシュにコピー
+            import shutil
+            shutil.copy2(source_file, cache_path)
+            print(f"💾 音声ファイルをキャッシュに保存: {cache_key}")
+            return cache_path
+        except Exception as e:
+            print(f"❌ キャッシュ保存エラー: {e}")
+            return source_file
 
     group = app_commands.Group(name='voice', description='voice commands')
 
@@ -121,6 +161,89 @@ class TTSCog(commands.Cog):
         embed.set_footer(text="💡 Botと同じPCからアクセスしてください")
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
+    
+    @group.command(name='clear_cache', description='音声キャッシュをクリアします（管理者のみ）')
+    @app_commands.default_permissions(administrator=True)
+    async def clear_cache(self, interaction: Interaction):
+        """音声キャッシュをクリア"""
+        try:
+            cache_files = [f for f in os.listdir(self.audio_cache_dir) if f.endswith('.wav')]
+            deleted_count = 0
+            
+            for cache_file in cache_files:
+                cache_path = os.path.join(self.audio_cache_dir, cache_file)
+                try:
+                    os.remove(cache_path)
+                    deleted_count += 1
+                except OSError:
+                    continue
+            
+            embed = discord.Embed(
+                title="🗑️ キャッシュクリア完了",
+                description=f"削除したファイル数: {deleted_count}個",
+                color=discord.Color.green()
+            )
+            embed.add_field(
+                name="💡 効果",
+                value="次回のTTS生成時に新しい音声ファイルが作成されます",
+                inline=False
+            )
+            
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            print(f"🗑️ キャッシュクリア完了: {deleted_count}ファイル削除")
+            
+        except Exception as e:
+            await interaction.response.send_message(
+                f"❌ キャッシュクリアでエラーが発生しました: {e}", 
+                ephemeral=True
+            )
+    
+    @group.command(name='cache_info', description='キャッシュ情報を表示します')
+    async def cache_info(self, interaction: Interaction):
+        """キャッシュ情報を表示"""
+        try:
+            cache_files = [f for f in os.listdir(self.audio_cache_dir) if f.endswith('.wav')]
+            total_files = len(cache_files)
+            
+            total_size = 0
+            for cache_file in cache_files:
+                cache_path = os.path.join(self.audio_cache_dir, cache_file)
+                try:
+                    total_size += os.path.getsize(cache_path)
+                except OSError:
+                    continue
+            
+            # バイトサイズを人間が読みやすい形式に変換
+            size_mb = total_size / (1024 * 1024)
+            
+            embed = discord.Embed(
+                title="📊 音声キャッシュ情報",
+                color=discord.Color.blue()
+            )
+            embed.add_field(
+                name="📁 キャッシュファイル数",
+                value=f"{total_files}個",
+                inline=True
+            )
+            embed.add_field(
+                name="💾 合計サイズ",
+                value=f"{size_mb:.2f} MB",
+                inline=True
+            )
+            embed.add_field(
+                name="📂 保存場所",
+                value=f"`{self.audio_cache_dir}`",
+                inline=False
+            )
+            embed.set_footer(text="💡 同じ設定・内容の読み上げは高速化されます")
+            
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            await interaction.response.send_message(
+                f"❌ キャッシュ情報取得でエラーが発生しました: {e}", 
+                ephemeral=True
+            )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -151,13 +274,25 @@ class TTSCog(commands.Cog):
             await self._process_tts_message(message)
     
     async def _process_tts_message(self, message: discord.Message) -> None:
-        """TTS処理を実行"""
+        """TTS処理を実行（キャッシュ対応）"""
         # ユーザー設定を取得（DB から）
         user_settings = await self._get_user_voice_settings(str(message.author.id))
         print(f"ユーザー設定: {user_settings}")
         
         # VoicePresetを作成
         voice_preset = tts_manager.create_voice_preset(user_settings)
+        
+        # キャッシュキーを生成
+        cache_key = self._generate_cache_key(message.content, voice_preset)
+        
+        # キャッシュされた音声ファイルがあるかチェック
+        if self._is_audio_cached(cache_key):
+            print(f"🎵 キャッシュされた音声を使用: {cache_key}")
+            cached_audio_path = self._get_cached_audio_path(cache_key)
+            await self._play_audio_in_discord(message.guild.id, cached_audio_path)
+            return
+        
+        print(f"🔄 新しい音声を生成中: {cache_key}")
         
         # プリセットを適用
         fallback_voice = user_settings.get("voice", list(tts_manager.voice_names.keys())[0] if tts_manager.voice_names else "")
@@ -170,8 +305,11 @@ class TTSCog(commands.Cog):
             print("音声生成に失敗しました")
             return
         
+        # 生成された音声をキャッシュに保存
+        cached_audio_path = self._save_to_cache(cache_key)
+        
         # Discordで再生
-        await self._play_audio_in_discord(message.guild.id)
+        await self._play_audio_in_discord(message.guild.id, cached_audio_path)
     
     async def _play_audio_in_discord(self, guild_id: int, audio_file: str = "data/audio/output.wav") -> None:
         """Discordボイスチャンネルで音声を再生"""
